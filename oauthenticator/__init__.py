@@ -3,6 +3,7 @@
 from .oauth2 import *
 from .github import *
 from .bitbucket import *
+from .microsoft import *
 from .google import *
 from .cilogon import *
 
