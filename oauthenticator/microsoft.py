@@ -26,7 +26,7 @@ from .oauth2 import OAuthLoginHandler, OAuthCallbackHandler, OAuthenticator
 class MicrosoftOAuth2Mixin(OAuth2Mixin):
     _OAUTH_AUTHORIZE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
     _OAUTH_ACCESS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-    _OAUTH_USERINFO_URL = "https://graph.microsoft.com/v1.0/"
+    _OAUTH_USERINFO_URL = "https://graph.microsoft.com/v1.0/me"
     _OAUTH_NO_CALLBACKS = False
     _OAUTH_SETTINGS_KEY = 'microsoft_oauth'
 
@@ -74,7 +74,7 @@ class MicrosoftOAuthenticator(OAuthenticator, MicrosoftOAuth2Mixin):
 
     @default('scope')
     def _scope_default(self):
-        return ['User.Read']
+        return ['offline_access', 'User.Read']
 
     hosted_domain = Unicode(
         os.environ.get('HOSTED_DOMAIN', ''),
@@ -103,7 +103,8 @@ class MicrosoftOAuthenticator(OAuthenticator, MicrosoftOAuth2Mixin):
         http_client = handler.get_auth_http_client()
 
         response = yield http_client.fetch(
-            self._OAUTH_USERINFO_URL + '?access_token=' + access_token
+            self._OAUTH_USERINFO_URL,
+            {'Authorization': 'Bearer ' + access_token}
         )
 
         if not response:
