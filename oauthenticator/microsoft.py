@@ -104,7 +104,7 @@ class MicrosoftOAuthenticator(OAuthenticator, MicrosoftOAuth2Mixin):
 
         response = yield http_client.fetch(
             self._OAUTH_USERINFO_URL,
-            header={'Authorization': 'Bearer ' + access_token}
+            headers={'Authorization': 'Bearer ' + access_token}
         )
 
         if not response:
