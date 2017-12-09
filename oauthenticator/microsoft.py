@@ -10,9 +10,8 @@ import functools
 
 import urllib.parse as urllib_parse
 
-from tornado import gen, escape, AuthError
-from tornado.auth import OAuth2Mixin, _auth_return_future
-from tornado.concurrent import future_set_result_unless_cancelled
+from tornado import gen, escape
+from tornado.auth import OAuth2Mixin, _auth_return_future, AuthError
 from tornado.web import HTTPError
 
 from traitlets import Unicode, default
@@ -53,8 +52,8 @@ class MicrosoftOAuth2Mixin(OAuth2Mixin):
             return
 
         args = escape.json_decode(response.body)
-        future_set_result_unless_cancelled(future, args)
-
+        if not future.cancelled():
+            future.set_result(args)
 
 class MicrosoftLoginHandler(OAuthLoginHandler, MicrosoftOAuth2Mixin):
     '''An OAuthLoginHandler that provides scope to MicrosoftOAuth2Mixin's
