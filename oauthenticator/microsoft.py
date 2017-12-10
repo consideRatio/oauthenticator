@@ -116,8 +116,7 @@ class MicrosoftOAuthenticator(OAuthenticator, MicrosoftOAuth2Mixin):
         username = bodyjs['userPrincipalName']
 
         if self.hosted_domain:
-            if not username.endswith('@'+self.hosted_domain) or \
-                bodyjs['hd'] != self.hosted_domain:
+            if not username.endswith('@'+self.hosted_domain):
                 raise HTTPError(403,
                     "You are not signed in to your {} account.".format(
                         self.hosted_domain)
