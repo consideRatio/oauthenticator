@@ -21,11 +21,17 @@ from jupyterhub.utils import url_path_join
 
 from .oauth2 import OAuthLoginHandler, OAuthCallbackHandler, OAuthenticator
 
+def azure_authorize_url_for(tentant):
+    return 'https://login.microsoftonline.com/{0}/oauth2/v2.0/authorize'.format(tentant)
+
+def azure_token_url_for(tentant):
+    return 'https://login.microsoftonline.com/{0}/oauth2/v2.0/token'.format(tentant)
+
 # Code adjusted from tornado.auth's GoogleOAuth2Mixin
 # https://github.com/tornadoweb/tornado/blob/master/tornado/auth.py#L835
 class MicrosoftOAuth2Mixin(OAuth2Mixin):
-    _OAUTH_AUTHORIZE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-    _OAUTH_ACCESS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+    _OAUTH_AUTHORIZE_URL = azure_authorize_url_for(self.settings[self._OAUTH_SETTINGS_KEY]['key'])
+    _OAUTH_ACCESS_TOKEN_URL = azure_token_url_for(self.settings[self._OAUTH_SETTINGS_KEY]['key'])
     _OAUTH_USERINFO_URL = "https://graph.microsoft.com/v1.0/me"
     _OAUTH_NO_CALLBACKS = False
     _OAUTH_SETTINGS_KEY = 'microsoft_oauth'
@@ -74,7 +80,7 @@ class MicrosoftOAuthenticator(OAuthenticator, MicrosoftOAuth2Mixin):
 
     @default('scope')
     def _scope_default(self):
-        return ['offline_access', 'User.Read']
+        return ['User.Read']
 
     hosted_domain = Unicode(
         os.environ.get('HOSTED_DOMAIN', ''),
