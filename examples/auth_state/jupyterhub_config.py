@@ -10,16 +10,14 @@ import os
 import warnings
 
 from oauthenticator.github import GitHubOAuthenticator
-from tornado import gen
 
 # define our OAuthenticator with `.pre_spawn_start`
 # for passing auth_state into the user environment
 
 class GitHubEnvAuthenticator(GitHubOAuthenticator):
 
-    @gen.coroutine
-    def pre_spawn_start(self, user, spawner):
-        auth_state = yield user.get_auth_state()
+    async def pre_spawn_start(self, user, spawner):
+        auth_state = await user.get_auth_state()
         import pprint
         pprint.pprint(auth_state)
         if not auth_state:
