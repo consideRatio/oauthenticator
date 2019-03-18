@@ -12,7 +12,7 @@ import os
 import re
 import string
 
-from tornado import gen, web
+from tornado import web
 
 from tornado.httputil import url_concat
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient, HTTPError
@@ -83,8 +83,7 @@ class GitHubOAuthenticator(OAuthenticator):
         help="Automatically whitelist members of selected organizations",
     )
 
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         """We set up auth_state based on additional GitHub info if we
         receive it.
         """
@@ -112,7 +111,7 @@ class GitHubOAuthenticator(OAuthenticator):
                           body=''  # Body is required for a POST...
                           )
 
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         if 'access_token' in resp_json:
@@ -130,7 +129,7 @@ class GitHubOAuthenticator(OAuthenticator):
                           method="GET",
                           headers=_api_headers(access_token)
                           )
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         username = resp_json["login"]
@@ -141,7 +140,7 @@ class GitHubOAuthenticator(OAuthenticator):
         # This check is performed here, as it requires `access_token`.
         if self.github_organization_whitelist:
             for org in self.github_organization_whitelist:
-                user_in_org = yield self._check_organization_whitelist(org, username, access_token)
+                user_in_org = await self._check_organization_whitelist(org, username, access_token)
                 if user_in_org:
                     break
             else:  # User not found in member list for any organisation
@@ -164,18 +163,17 @@ class GitHubOAuthenticator(OAuthenticator):
 
         return userdict
 
-    @gen.coroutine
-    def _check_organization_whitelist(self, org, username, access_token):
+    async def _check_organization_whitelist(self, org, username, access_token):
         http_client = AsyncHTTPClient()
         headers = _api_headers(access_token)
         # Check membership of user `username` for organization `org` via api [check-membership](https://developer.github.com/v3/orgs/members/#check-membership)
         # With empty scope (even if authenticated by an org member), this
-        #  will only yield public org members.  You want 'read:org' in order
+        #  will only await public org members.  You want 'read:org' in order
         #  to be able to iterate through all members.
         check_membership_url = "%s://%s/orgs/%s/members/%s" % (GITHUB_PROTOCOL, GITHUB_API, org, username)
         req = HTTPRequest(check_membership_url, method="GET", headers=headers)
         self.log.debug("Checking GitHub organization membership: %s in %s?", username, org)
-        resp = yield http_client.fetch(req, raise_error=False)
+        resp = await http_client.fetch(req, raise_error=False)
         if resp.code == 204:
             self.log.info("Allowing %s as member of %s", username, org)
             return True

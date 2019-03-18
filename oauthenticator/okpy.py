@@ -4,7 +4,7 @@ Custom Authenticator to use okpy OAuth with JupyterHub
 import json
 from binascii import a2b_base64
 
-from tornado import gen, web
+from tornado import web
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient
 from tornado.httputil import url_concat
 from traitlets import default
@@ -62,20 +62,19 @@ class OkpyOAuthenticator(OAuthenticator):
         req = HTTPRequest(url, method = "GET", headers = headers)
         return req
 
-    @gen.coroutine
-    def authenticate(self, handler, data = None):
+    async def authenticate(self, handler, data = None):
         code = handler.get_argument("code", False)
         if not code:
             raise web.HTTPError(400, "Authentication Cancelled.")
         http_client = AsyncHTTPClient()
         auth_request = self.get_auth_request(code)
-        response = yield http_client.fetch(auth_request)
+        response = await http_client.fetch(auth_request)
         if not response:
             raise web.HTTPError(500, 'Authentication Failed: Token Not Acquired')
         state = json.loads(response.body.decode('utf8', 'replace'))
         access_token = state['access_token']
         info_request = self.get_user_info_request(access_token)
-        response = yield http_client.fetch(info_request)
+        response = await http_client.fetch(info_request)
         user = json.loads(response.body.decode('utf8', 'replace'))
         # TODO: preserve state in auth_state when JupyterHub supports encrypted auth_state
         return {

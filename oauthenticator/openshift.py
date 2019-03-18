@@ -8,7 +8,7 @@ Derived from the GitHub OAuth authenticator.
 import json
 import os
 
-from tornado import gen, web
+from tornado import web
 
 from tornado.httputil import url_concat
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient
@@ -40,8 +40,7 @@ class OpenShiftOAuthenticator(OAuthenticator):
 
     scope = ['user:info']
 
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         code = handler.get_argument("code")
         # TODO: Configure the curl_httpclient for tornado
         http_client = AsyncHTTPClient()
@@ -66,7 +65,7 @@ class OpenShiftOAuthenticator(OAuthenticator):
                           body='' # Body is required for a POST...
                           )
 
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
 
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
@@ -83,7 +82,7 @@ class OpenShiftOAuthenticator(OAuthenticator):
                           validate_cert=False,
                           headers=headers)
 
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         return {

@@ -7,7 +7,6 @@ Derived from the GitHub OAuth authenticator.
 import os
 import json
 
-from tornado import gen
 from tornado.auth import GoogleOAuth2Mixin
 from tornado.web import HTTPError
 
@@ -69,22 +68,21 @@ class GoogleOAuthenticator(OAuthenticator):
         help="""Google Apps hosted domain string, e.g. My College"""
     )
 
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         code = handler.get_argument("code")
         handler.settings['google_oauth'] = {
             'key': self.client_id,
             'secret': self.client_secret,
             'scope': self.scope,
         }
-        user = yield handler.get_authenticated_user(
+        user = await handler.get_authenticated_user(
             redirect_uri=self.get_callback_url(handler),
             code=code)
         access_token = str(user['access_token'])
 
         http_client = handler.get_auth_http_client()
 
-        response = yield http_client.fetch(
+        response = await http_client.fetch(
             handler._OAUTH_USERINFO_URL + '?access_token=' + access_token
         )
 

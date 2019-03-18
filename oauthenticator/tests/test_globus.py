@@ -150,8 +150,7 @@ async def test_custom_logout(monkeypatch):
 async def test_logout_revokes_tokens(monkeypatch):
 
     class User:
-        @gen.coroutine
-        def get_auth_state(self):
+        async def get_auth_state(self):
             return {'tokens': {}}
 
         save_auth_state = Mock()

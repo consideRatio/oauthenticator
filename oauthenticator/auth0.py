@@ -32,7 +32,7 @@ jupyterhub_config.py :
 import json
 import os
 
-from tornado import gen, web
+from tornado import web
 
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient
 
@@ -56,8 +56,7 @@ class Auth0OAuthenticator(OAuthenticator):
     
     login_handler = Auth0LoginHandler
     
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         code = handler.get_argument("code")
         # TODO: Configure the curl_httpclient for tornado
         http_client = AsyncHTTPClient()
@@ -77,7 +76,7 @@ class Auth0OAuthenticator(OAuthenticator):
                           body=json.dumps(params)
                           )
         
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
         
         access_token = resp_json['access_token']
@@ -91,7 +90,7 @@ class Auth0OAuthenticator(OAuthenticator):
                           method="GET",
                           headers=headers
                           )
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         return {

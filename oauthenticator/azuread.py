@@ -12,7 +12,7 @@ import urllib
 import sys
 
 from tornado.log import app_log
-from tornado import gen, web
+from tornado import web
 
 from tornado.httputil import url_concat
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient
@@ -63,8 +63,7 @@ class AzureAdOAuthenticator(OAuthenticator):
             app_log.info('ID4: {0}'.format(tenant_id))
             return tenant_id
 
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         code = handler.get_argument("code")
         http_client = AsyncHTTPClient()
 
@@ -92,7 +91,7 @@ class AzureAdOAuthenticator(OAuthenticator):
             body=data  # Body is required for a POST...
         )
 
-        resp = yield http_client.fetch(req)
+        resp = await http_client.fetch(req)
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         # app_log.info("Response %s", resp_json)

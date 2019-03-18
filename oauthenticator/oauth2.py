@@ -9,7 +9,7 @@ import json
 import os
 import uuid
 
-from tornado import gen, web
+from tornado import web
 from tornado.auth import OAuth2Mixin
 from tornado.log import app_log
 
@@ -165,13 +165,12 @@ class OAuthCallbackHandler(BaseHandler):
             return super().get_next_url(user)
         return url_path_join(self.hub.server.base_url, 'home')
 
-    @gen.coroutine
-    def _login_user_pre_08(self):
+    async def _login_user_pre_08(self):
         """login_user simplifies the login+cookie+auth_state process in JupyterHub 0.8
 
         _login_user_07 is for backward-compatibility with JupyterHub 0.7
         """
-        user_info = yield self.authenticator.get_authenticated_user(self, None)
+        user_info = await self.authenticator.get_authenticated_user(self, None)
         if user_info is None:
             return
         if isinstance(user_info, dict):
@@ -186,10 +185,9 @@ class OAuthCallbackHandler(BaseHandler):
         # JupyterHub 0.7 doesn't have .login_user
         login_user = _login_user_pre_08
 
-    @gen.coroutine
-    def get(self):
+    async def get(self):
         self.check_arguments()
-        user = yield self.login_user()
+        user = await self.login_user()
         if user is None:
             # todo: custom error page?
             raise web.HTTPError(403)
@@ -276,6 +274,5 @@ class OAuthenticator(Authenticator):
             (r'/oauth_callback', self.callback_handler),
         ]
 
-    @gen.coroutine
-    def authenticate(self, handler, data=None):
+    async def authenticate(self, handler, data=None):
         raise NotImplementedError()
