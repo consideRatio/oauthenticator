@@ -35,8 +35,8 @@ def google_client(client):
 async def test_google(google_client):
     authenticator = GoogleOAuthenticator()
     handler = google_client.handler_for_user(user_model('fake@email.com'))
-    user_info = await authenticator.authenticate(handler)
-    assert sorted(user_info) == ['auth_state', 'name']
+    user_info = await authenticator.get_authenticated_user(handler, None)
+    assert sorted(user_info) == ['admin', 'auth_state', 'name']
     name = user_info['name']
     assert name == 'fake@email.com'
     auth_state = user_info['auth_state']
@@ -48,8 +48,8 @@ async def test_google_username_claim(google_client):
     authenticator = GoogleOAuthenticator()
     authenticator.username_claim = "sub"
     handler = google_client.handler_for_user(user_model('fake@email.com'))
-    user_info = await authenticator.authenticate(handler)
-    assert sorted(user_info) == ['auth_state', 'name']
+    user_info = await authenticator.get_authenticated_user(handler, None)
+    assert sorted(user_info) == ['admin', 'auth_state', 'name']
     name = user_info['name']
     assert name == '724f95667e2fbe903ee1b4cffcae3b25'
 
@@ -57,31 +57,31 @@ async def test_google_username_claim(google_client):
 async def test_hosted_domain(google_client):
     authenticator = GoogleOAuthenticator(hosted_domain=['email.com'])
     handler = google_client.handler_for_user(user_model('fake@email.com'))
-    user_info = await authenticator.authenticate(handler)
+    user_info = await authenticator.get_authenticated_user(handler, None)
     name = user_info['name']
     assert name == 'fake@email.com'
 
     handler = google_client.handler_for_user(user_model('notallowed@notemail.com'))
     with raises(HTTPError) as exc:
-        name = await authenticator.authenticate(handler)
+        name = await authenticator.get_authenticated_user(handler, None)
     assert exc.value.status_code == 403
 
 
 async def test_multiple_hosted_domain(google_client):
     authenticator = GoogleOAuthenticator(hosted_domain=['email.com', 'mycollege.edu'])
     handler = google_client.handler_for_user(user_model('fake@email.com'))
-    user_info = await authenticator.authenticate(handler)
+    user_info = await authenticator.get_authenticated_user(handler, None)
     name = user_info['name']
     assert name == 'fake@email.com'
 
     handler = google_client.handler_for_user(user_model('fake2@mycollege.edu'))
-    user_info = await authenticator.authenticate(handler)
+    user_info = await authenticator.get_authenticated_user(handler, None)
     name = user_info['name']
     assert name == 'fake2@mycollege.edu'
 
     handler = google_client.handler_for_user(user_model('notallowed@notemail.com'))
     with raises(HTTPError) as exc:
-        name = await authenticator.authenticate(handler)
+        name = await authenticator.get_authenticated_user(handler, None)
     assert exc.value.status_code == 403
 
 
@@ -97,7 +97,7 @@ async def test_admin_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakeadmingroup'],
     ):
-        admin_user_info = await authenticator.authenticate(handler)
+        admin_user_info = await authenticator.get_authenticated_user(handler, None)
         # Make sure the user authenticated successfully
         assert admin_user_info
         # Assert that the user is an admin
@@ -123,7 +123,7 @@ async def test_admin_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakenonallowedgroup'],
     ):
-        allowed_user_groups = await authenticator.authenticate(handler)
+        allowed_user_groups = await authenticator.get_authenticated_user(handler, None)
         assert allowed_user_groups is None
 
 
@@ -157,7 +157,7 @@ async def test_allowed_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakeadmingroup'],
     ):
-        admin_user_info = await authenticator.authenticate(handler)
+        admin_user_info = await authenticator.get_authenticated_user(handler, None)
         assert admin_user_info is None
     handler = google_client.handler_for_user(user_model('fakealloweduser@email.com'))
     with mock.patch.object(
@@ -165,7 +165,7 @@ async def test_allowed_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakegroup'],
     ):
-        allowed_user_info = await authenticator.authenticate(handler)
+        allowed_user_info = await authenticator.get_authenticated_user(handler, None)
         allowed_user_groups = allowed_user_info['auth_state']['google_user'][
             'google_groups'
         ]
@@ -178,13 +178,13 @@ async def test_allowed_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakenonallowedgroup'],
     ):
-        allowed_user_groups = await authenticator.authenticate(handler)
+        allowed_user_groups = await authenticator.get_authenticated_user(handler, None)
         assert allowed_user_groups is None
     handler = google_client.handler_for_user(user_model('fake@mycollege.edu'))
     with mock.patch.object(
         authenticator, '_google_groups_for_user', return_value=['fakegroup']
     ):
-        allowed_user_groups = await authenticator.authenticate(handler)
+        allowed_user_groups = await authenticator.get_authenticated_user(handler, None)
         assert allowed_user_groups is None
 
 
@@ -199,7 +199,7 @@ async def test_admin_only_google_groups(google_client):
         '_google_groups_for_user',
         return_value=['anotherone', 'fakeadmingroup'],
     ):
-        admin_user_info = await authenticator.authenticate(handler)
+        admin_user_info = await authenticator.get_authenticated_user(handler, None)
         admin_user = admin_user_info['admin']
         assert admin_user is True
 
